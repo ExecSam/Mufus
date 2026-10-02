@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mufus - Create bootable USB drives, up to 10 at once</title>
+  <meta name="description" content="Mufus is Rufus, the Reliable USB Formatting Utility, with a multi-drive mode that writes the same image to up to 10 USB drives at once. Free, open source and portable.">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1c1c1c" media="(prefers-color-scheme: dark)">
+  <link rel="canonical" href="https://mufus.samjackaman.dev/">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" href="img/icon-256.png">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Mufus - Create bootable USB drives, up to 10 at once">
+  <meta property="og:description" content="Rufus, with a multi-drive mode that writes the same image to up to 10 USB drives at once.">
+  <meta property="og:url" content="https://mufus.samjackaman.dev/">
+  <meta property="og:image" content="https://mufus.samjackaman.dev/img/main-light.png">
+  <meta name="twitter:card" content="summary">
+  <link rel="stylesheet" href="style.css">
+  <script src="main.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="wrap header-inner">
+      <a class="brand" href="#top" aria-label="Mufus home">
+        <img src="img/icon-64.png" width="32" height="32" alt="">
+        <span>Mufus</span>
+      </a>
+      <nav class="nav" aria-label="Main">
+        <a href="#download">Download</a>
+        <a href="#multi-drive">Multi-drive</a>
+        <a href="#features">Features</a>
+        <a href="#source">Source code</a>
+        <a class="nav-gh" href="https://github.com/ExecSam/Mufus" aria-label="Mufus on GitHub">
+          <svg viewBox="0 0 16 16" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero" id="top">
+      <div class="wrap hero-inner">
+        <div class="hero-text">
+          <p class="eyebrow">Based on Rufus <span data-version>4.15</span></p>
+          <h1>Create bootable USB drives the easy way. <span class="accent">Up to 10 at once.</span></h1>
+          <p class="lead">
+            Mufus is <a href="https://rufus.ie">Rufus</a>, the Reliable USB Formatting Utility by Pete Batard,
+            with one addition: a multi-drive mode that writes the same ISO or disk image to up to
+            10 USB drives at the same time. Everything else works exactly like Rufus.
+          </p>
+          <div class="actions">
+            <a class="btn btn-primary" href="https://github.com/ExecSam/Mufus/releases/download/v4.15/mufus-4.15.exe" data-dl="x64">
+              <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 3v12m0 0-5-5m5 5 5-5M5 21h14"/></svg>
+              <span class="btn-label">Download Mufus <span data-version>4.15</span><small>Windows x64 &middot; <span data-size="x64">5.2 MB</span></small></span>
+            </a>
+            <a class="btn btn-secondary" href="https://github.com/ExecSam/Mufus">
+              <svg viewBox="0 0 16 16" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+              Source code
+            </a>
+          </div>
+          <p class="hero-meta">
+            Windows 8 or later &middot; Portable, no installation &middot; Free and open source (GPLv3)<br>
+            Also available for <a href="https://github.com/ExecSam/Mufus/releases/download/v4.15/mufus-4.15_x86.exe" data-dl="x86">32-bit Windows</a>.
+          </p>
+        </div>
+
+        <div class="shots" aria-label="Screenshots of Mufus writing to three drives">
+          <picture class="shot shot-main">
+            <source srcset="img/main-dark.png" media="(prefers-color-scheme: dark)" width="474" height="585">
+            <img src="img/main-light.png" width="474" height="543" alt="The Mufus main window, with three drives selected in the Device list">
+          </picture>
+          <picture class="shot shot-progress">
+            <source srcset="img/progress-dark.png" media="(prefers-color-scheme: dark)" width="527" height="251">
+            <img src="img/progress-light.png" width="527" height="251" alt="The Mufus multi-drive progress window, showing the status of each of the three drives">
+          </picture>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="download">
+      <div class="wrap">
+        <h2 class="section-title">Download</h2>
+        <p class="muted">
+          Latest release: <strong>Mufus <span data-version>4.15</span></strong>,
+          published <time data-date datetime="2026-10-02">2 October 2026</time>.
+        </p>
+
+        <div class="dl-list">
+          <div class="dl-row">
+            <div class="dl-file">
+              <a class="dl-name" href="https://github.com/ExecSam/Mufus/releases/download/v4.15/mufus-4.15.exe" data-dl="x64"><span data-name="x64">mufus-4.15.exe</span></a>
+              <span class="badge">Recommended</span>
+              <div class="dl-sub">Windows x64 (64-bit) &middot; <span data-size="x64">5.2 MB</span></div>
+            </div>
+            <div class="dl-hash">
+              <span class="dl-hash-label">SHA-256</span>
+              <code data-sha="x64" title="eaf7c75b2dc82977f34fcdec5ef3adea313758b8d590d1b7a71a04938339423d">eaf7c75b&hellip;8339423d</code>
+              <button class="copy" type="button" data-copy-sha="x64" data-copy="eaf7c75b2dc82977f34fcdec5ef3adea313758b8d590d1b7a71a04938339423d" aria-label="Copy SHA-256 of the 64-bit version" hidden>Copy</button>
+            </div>
+            <a class="btn btn-primary btn-small" href="https://github.com/ExecSam/Mufus/releases/download/v4.15/mufus-4.15.exe" data-dl="x64">Download</a>
+          </div>
+          <div class="dl-row">
+            <div class="dl-file">
+              <a class="dl-name" href="https://github.com/ExecSam/Mufus/releases/download/v4.15/mufus-4.15_x86.exe" data-dl="x86"><span data-name="x86">mufus-4.15_x86.exe</span></a>
+              <div class="dl-sub">Windows x86 (32-bit) &middot; <span data-size="x86">5.0 MB</span></div>
+            </div>
+            <div class="dl-hash">
+              <span class="dl-hash-label">SHA-256</span>
+              <code data-sha="x86" title="4480dba63246a66fcf4aaa8fa4d2939dfd12796f5413aa13ef743c062ac15a83">4480dba6&hellip;2ac15a83</code>
+              <button class="copy" type="button" data-copy-sha="x86" data-copy="4480dba63246a66fcf4aaa8fa4d2939dfd12796f5413aa13ef743c062ac15a83" aria-label="Copy SHA-256 of the 32-bit version" hidden>Copy</button>
+            </div>
+            <a class="btn btn-secondary btn-small" href="https://github.com/ExecSam/Mufus/releases/download/v4.15/mufus-4.15_x86.exe" data-dl="x86">Download</a>
+          </div>
+        </div>
+        <p class="dl-links">
+          <a href="https://github.com/ExecSam/Mufus/releases/tag/v4.15" data-notes>Release notes</a>
+          <a href="https://github.com/ExecSam/Mufus/releases">All releases</a>
+        </p>
+
+        <div class="info-grid">
+          <div class="info">
+            <h3>System requirements</h3>
+            <p>Windows 8 or later, 32 or 64-bit. Mufus needs administrator rights and asks for them when it starts, as Rufus does. There is nothing to install: just run the executable.</p>
+          </div>
+          <div class="info">
+            <h3>Windows SmartScreen</h3>
+            <p>Mufus releases are not code signed, so Windows may say <em>"Windows protected your PC"</em> the first time you run it. Click <strong>More info</strong>, then <strong>Run anyway</strong>. You can check the SHA-256 above, or <a href="#source">build Mufus yourself</a>.</p>
+          </div>
+          <div class="info">
+            <h3>Updates</h3>
+            <p>Mufus doesn't check for new versions of itself, so come back here or watch the <a href="https://github.com/ExecSam/Mufus/releases">Releases</a> page from time to time.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-alt" id="multi-drive">
+      <div class="wrap">
+        <h2 class="section-title">Multi-drive mode</h2>
+        <div class="split">
+          <ol class="steps">
+            <li>
+              <h3>Plug in your drives</h3>
+              <p>Up to 10 USB drives. They don't need to be the same size.</p>
+            </li>
+            <li>
+              <h3>Select them</h3>
+              <p>Click the multi-drive button <img class="inline-icon" src="img/multi-32.png" width="16" height="16" alt="(stacked drives icon)"> at the end of the <strong>Device</strong> row, tick the drives you want and click <strong>OK</strong>. Click it again to go back to single drive mode.</p>
+            </li>
+            <li>
+              <h3>Choose your image and press START</h3>
+              <p>All the usual Rufus questions are asked once, for every drive, followed by a single confirmation that lists every drive about to be erased.</p>
+            </li>
+            <li>
+              <h3>Watch them all write at once</h3>
+              <p>A progress window shows the status of each drive, and tells you which ones succeeded when it's done. A drive that fails doesn't affect the others.</p>
+            </li>
+          </ol>
+          <picture class="shot shot-picker">
+            <source srcset="img/picker-dark.png" media="(prefers-color-scheme: dark)" width="492" height="437">
+            <img src="img/picker-light.png" width="492" height="437" alt="The Mufus drive picker, with three drives ticked out of a maximum of ten" loading="lazy">
+          </picture>
+        </div>
+
+        <h3 class="sub-title">Good to know</h3>
+        <ul class="notes">
+          <li><strong>Same image and options for every drive.</strong> Defaults that Rufus derives from the drive, such as the cluster size or the size based volume label, are worked out for each drive, and every drive is checked before anything is written.</li>
+          <li><strong>Speed.</strong> The drives share your USB controllers and hubs, so writing several at once is faster than one by one, but each drive is slower than on its own. A powered USB 3 hub helps.</li>
+          <li><strong>Cancel</strong> stops every drive.</li>
+          <li><strong>Mufus and Rufus can't run at the same time</strong>, and Mufus keeps its settings separate from Rufus'.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="section" id="features">
+      <div class="wrap">
+        <h2 class="section-title">Everything Rufus does</h2>
+        <p class="muted">Single drive mode is unchanged from Rufus, and so is everything else:</p>
+        <ul class="features">
+          <li>Format USB, flash card and virtual drives to FAT, FAT32, NTFS, UDF, exFAT, ReFS and ext2/3</li>
+          <li>Create bootable drives from bootable ISOs: Windows, Linux and more</li>
+          <li>Create BIOS or UEFI bootable drives, including UEFI bootable NTFS</li>
+          <li>Create Windows 11 installation drives for PCs without TPM or Secure Boot</li>
+          <li>Set up Windows installation options: local account, privacy settings and more</li>
+          <li>Download official Microsoft Windows 8, 10 and 11 retail ISOs</li>
+          <li>Create bootable drives from disk images, including compressed ones</li>
+          <li>Create DOS bootable drives using FreeDOS or MS-DOS</li>
+          <li>Create Windows To Go drives and persistent Linux partitions</li>
+          <li>Create VHD/DD, VHDX and FFU images of an existing drive</li>
+          <li>Compute MD5, SHA-1, SHA-256 and SHA-512 checksums of an image</li>
+          <li>Check for bad blocks, including &ldquo;fake&rdquo; flash drives</li>
+          <li>Validate UEFI bootable media at runtime</li>
+          <li>Available in 38 languages</li>
+        </ul>
+        <p class="muted">For help with these, see the <a href="https://github.com/pbatard/rufus/wiki/FAQ">Rufus FAQ</a>: it applies to Mufus too.</p>
+      </div>
+    </section>
+
+    <section class="section section-alt" id="source">
+      <div class="wrap">
+        <h2 class="section-title">Source code</h2>
+        <div class="split split-even">
+          <div>
+            <p>Like Rufus, Mufus is <a href="https://www.gnu.org/philosophy/free-sw.html">Free Software</a>, licensed under the <a href="https://www.gnu.org/licenses/gpl-3.0.html">GPL v3</a> or later. The full source code is on GitHub:</p>
+            <div class="code">
+              <code>git clone https://github.com/ExecSam/Mufus.git</code>
+              <button class="copy" type="button" data-copy="git clone https://github.com/ExecSam/Mufus.git" aria-label="Copy git clone command" hidden>Copy</button>
+            </div>
+            <p>Build it with Visual Studio 2026 (or MinGW), as for Rufus. From a Developer Command Prompt:</p>
+            <div class="code">
+              <code>msbuild rufus.sln /m /p:Configuration=Release /p:Platform=x64</code>
+              <button class="copy" type="button" data-copy="msbuild rufus.sln /m /p:Configuration=Release /p:Platform=x64" aria-label="Copy build command" hidden>Copy</button>
+            </div>
+            <p class="muted">With Visual Studio 2022, add <code>/p:PlatformToolset=v143</code>. Use <code>/p:Platform=x86</code> for the 32-bit version.</p>
+            <p class="links">
+              <a href="https://github.com/ExecSam/Mufus">Repository</a>
+              <a href="https://github.com/ExecSam/Mufus/issues">Report an issue</a>
+              <a href="https://github.com/ExecSam/Mufus/blob/master/LICENSE.txt">Licence</a>
+              <a href="https://github.com/pbatard/rufus">Upstream Rufus</a>
+            </p>
+          </div>
+          <div>
+            <h3>How it works</h3>
+            <p>Rufus keeps most of its state in global variables, so several copies of its formatting code can't run in one process. Mufus does all of the preparation work in the main application, then starts one hidden copy of itself per drive, each running the unmodified Rufus formatting code against its own drive.</p>
+            <p>Their logs, progress, prompts and results are relayed back to the main window, and the resources the drives would otherwise compete for, such as drive letters, temporary files and disk signatures, are coordinated between them.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap footer-inner">
+      <div>
+        <p class="footer-brand"><img src="img/icon-64.png" width="20" height="20" alt=""> Mufus</p>
+        <p>Rufus &copy; 2011-2026 <a href="https://github.com/pbatard">Pete Batard</a> and contributors. Multi-drive mode &copy; 2026 Sam Jackaman (<a href="https://github.com/ExecSam">ExecSam</a>).</p>
+        <p>Mufus is an independent fork of Rufus. It is not affiliated with, or supported by, the Rufus project or Akeo Consulting. Please report Mufus issues <a href="https://github.com/ExecSam/Mufus/issues">on GitHub</a>, not to Rufus.</p>
+      </div>
+      <nav class="footer-links" aria-label="Footer">
+        <a href="https://github.com/ExecSam/Mufus">GitHub</a>
+        <a href="https://github.com/ExecSam/Mufus/releases">Releases</a>
+        <a href="https://github.com/ExecSam/Mufus/issues">Issues</a>
+        <a href="https://rufus.ie">rufus.ie</a>
+      </nav>
+    </div>
+  </footer>
+</body>
+</html>

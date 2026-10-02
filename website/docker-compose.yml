@@ -1,0 +1,10 @@
+services:
+  mufus-web:
+    build: .
+    image: mufus-web
+    container_name: ${CONTAINER_NAME:-mufus-web}
+    restart: unless-stopped
+    ports:
+      - "${BIND_ADDRESS:-0.0.0.0}:${PORT:-8080}:8080"
+    security_opt:
+      - no-new-privileges:true
