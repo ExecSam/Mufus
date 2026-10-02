@@ -1,63 +1,76 @@
 Mufus: Multi-instance Rufus
 ===========================
 
-**Mufus** is a fork of [Rufus](https://rufus.ie), the Reliable USB Formatting Utility by
-[Pete Batard](https://github.com/pbatard/rufus), that can write an image to **up to 10 USB drives at once**.
-
-Everything Rufus does, Mufus does the same way: the regular single drive mode is unchanged. Multi-drive
-mode is an addition, by Sam Jackaman ([ExecSam](https://github.com/ExecSam)).
-
-Multi-drive mode
-----------------
-
-* Click the multi-drive button at the end of the **Device** row, then tick the drives you want to write to
-  (up to 10). The device dropdown then shows your selection. Click it again to change the selection, or click
-  the multi-drive button again to go back to single drive mode.
-* Select your image and options as usual, and press **START**. All the regular Rufus checks and prompts
-  (ISO/DD mode, Windows User Experience options, downloads, ...) happen once, for all the drives.
-* The drives are then written **concurrently**, and a progress window shows the status of each drive.
-  The main progress bar shows the overall progress, and the log shows the output of each drive, prefixed
-  with its drive letter (or disk number).
-* Options that Rufus derives from the drive (default cluster size, size based volume label, ...) are
-  computed for each drive, and every drive is validated (size, file system, sector size, ...) before
-  anything is written.
-
-### How it works
-
-Rufus keeps most of its state in global variables, so running several copies of its formatting code in
-the same process is not possible. Instead, Mufus performs all of the preparation work in the main
-application, and then starts one hidden copy of itself per drive, each running the unmodified Rufus
-formatting code against its own drive. Their logs, progress, prompts and results are relayed to the main
-application. Resources that the workers would otherwise compete for (drive letters, temporary files,
-offline registry hives, VHD sources, ...) are coordinated between them.
-
-### Credits
-
-* Rufus is Copyright © 2011-2026 [Pete Batard](https://github.com/pbatard) and its many contributors.
-  See [rufus.ie](https://rufus.ie) and the About box for the full list of credits and licenses.
-* The multi-instance (multi-drive) functionality is by Sam Jackaman ([ExecSam](https://github.com/ExecSam)).
-* Like Rufus, Mufus is [Free Software](https://www.gnu.org/philosophy/free-sw), licensed under the
-  [GPL v3](https://www.gnu.org/licenses/gpl-3.0) or later.
-
-Please do not report Mufus issues to the Rufus project: use [this repository](https://github.com/ExecSam/Mufus/issues) instead.
-
-Rufus: The Reliable USB Formatting Utility
-==========================================
-
-[![VS2022 Build Status](https://img.shields.io/github/actions/workflow/status/pbatard/rufus/vs2026.yml?branch=master&style=flat-square&label=VS2026%20Build)](https://github.com/pbatard/rufus/actions/workflows/vs2026.yml)
-[![MinGW Build Status](https://img.shields.io/github/actions/workflow/status/pbatard/rufus/mingw.yml?branch=master&style=flat-square&label=MinGW%20Build)](https://github.com/pbatard/rufus/actions/workflows/mingw.yml)
-[![Coverity Scan Status](https://img.shields.io/coverity/scan/2172.svg?style=flat-square&label=Coverity%20Analysis)](https://scan.coverity.com/projects/pbatard-rufus)  
-[![Latest Release](https://img.shields.io/github/release-pre/pbatard/rufus.svg?style=flat-square&label=Latest%20Release)](https://github.com/pbatard/rufus/releases)
+[![Latest Release](https://img.shields.io/github/v/release/ExecSam/Mufus?style=flat-square&label=Latest%20Release)](https://github.com/ExecSam/Mufus/releases/latest)
 [![Licence](https://img.shields.io/badge/license-GPLv3-blue.svg?style=flat-square&label=License)](https://www.gnu.org/licenses/gpl-3.0.en.html)
-[![Download Stats](https://img.shields.io/github/downloads/pbatard/rufus/total.svg?label=Downloads&style=flat-square)](https://github.com/pbatard/rufus/releases)
-[![Contributors](https://img.shields.io/github/contributors/pbatard/rufus.svg?style=flat-square&label=Contributors)](https://github.com/pbatard/rufus/graphs/contributors)
 
-![Rufus logo](https://raw.githubusercontent.com/pbatard/rufus/master/res/icons/rufus-128.png)
+**Mufus** is [Rufus](https://rufus.ie), the Reliable USB Formatting Utility by
+[Pete Batard](https://github.com/pbatard/rufus), with one addition: it can write the same image to
+**up to 10 USB drives at once**.
 
-Rufus is a utility that helps format and create bootable USB flash drives.
+Everything else works exactly like Rufus: the regular single drive mode is unchanged, and so are all
+the Rufus features listed below. The multi-drive mode is by Sam Jackaman ([ExecSam](https://github.com/ExecSam)).
 
-Features
+> Mufus is an independent fork. It is not affiliated with, or supported by, the Rufus project or Akeo
+> Consulting. Please report Mufus issues [here](https://github.com/ExecSam/Mufus/issues), not to Rufus.
+
+Download
 --------
+
+Get the latest version from the [Releases](https://github.com/ExecSam/Mufus/releases/latest) page:
+
+| File                  | For                                                   |
+|-----------------------|-------------------------------------------------------|
+| `mufus-<version>.exe`     | 64-bit Windows (x64) - this is the one most people want |
+| `mufus-<version>_x86.exe` | 32-bit Windows                                    |
+
+* **Requirements:** Windows 8 or later, and administrator rights (Mufus asks for them when it starts, as
+  Rufus does).
+* **No installation:** just run the executable.
+* **Windows SmartScreen:** Mufus releases are not code signed (unlike the official Rufus releases), so
+  Windows may say *"Windows protected your PC"* the first time you run it. Click **More info** then
+  **Run anyway**. If you'd rather not, you can build Mufus yourself (see below), and the SHA-256 of each
+  release file is listed in its release notes.
+
+Writing to multiple drives
+--------------------------
+
+1. Plug in the drives you want to write to.
+2. Click the **multi-drive** button (stacked drives icon) at the end of the **Device** row, tick the drives
+   you want (up to 10) and click **OK**. The device dropdown now shows your selection (e.g.
+   *3 drives selected: E:, F:, G:*). Click it to change the selection, or click the multi-drive button
+   again to go back to single drive mode.
+3. Select your image and options as usual, then press **START**. All the usual Rufus questions (ISO or DD
+   mode, Windows customization options, additional downloads, ...) are asked **once**, for all the
+   drives. You then get one confirmation listing every drive that is about to be erased.
+4. The drives are written **at the same time**. A progress window shows the status of each drive, the
+   main progress bar shows the overall progress, and the log shows the output of every drive, prefixed
+   with its drive letter (or disk number).
+5. When it's done, the progress window shows which drives succeeded. Any drive that failed is listed
+   with the reason, and the others are not affected.
+
+Good to know:
+
+* **Same image and options for every drive.** Options that Rufus derives from the drive itself, such as
+  the default cluster size or the size based volume label, are worked out for each drive. Every drive is
+  checked (size, file system, sector size, ...) before anything is written, and the options shown are
+  the ones for the smallest selected drive.
+* **Cancel** stops all the drives.
+* **Speed:** the drives share your USB controller(s) and hub(s), so writing 10 drives at once is faster
+  than writing them one by one, but each drive will be slower than on its own. A powered USB 3 hub, or
+  spreading the drives over several ports, helps.
+* **Saving a drive to an image** (the save button next to the device list) is single drive only.
+* **Mufus and Rufus can't run at the same time.** They change the same Windows settings while running
+  (and restore them on exit), so each one refuses to start while the other is open.
+* **Settings** are stored separately from Rufus' (in `HKCU\Software\ExecSam\Mufus`, or in a `mufus.ini`
+  file next to the executable, if there is one).
+* **Updates:** Mufus doesn't check for new versions of itself, so check the
+  [Releases](https://github.com/ExecSam/Mufus/releases) page from time to time. The *Check for updates*
+  setting is still used for the rest (UEFI revocation list updates and Windows ISO downloads).
+* **Languages:** Mufus has all the Rufus translations, but the few multi-drive mode texts are in English.
+
+Features (from Rufus)
+---------------------
 
 * Format USB, flash card and virtual drives to FAT/FAT32/NTFS/UDF/exFAT/ReFS/ext2/ext3
 * Create DOS bootable USB drives using [FreeDOS](https://www.freedos.org) or MS-DOS
@@ -74,35 +87,45 @@ Features
 * Perform bad blocks checks, including detection of "fake" flash drives
 * Download official Microsoft Windows 8, Windows 10 or Windows 11 retail ISOs
 * Download [UEFI Shell](https://github.com/pbatard/UEFI-Shell) ISOs
-* Modern and familiar UI, with [38 languages natively supported](https://github.com/pbatard/rufus/wiki/FAQ#What_languages_are_natively_supported_by_Rufus)
+* Modern and familiar UI, in 38 languages
 * Small footprint. No installation required.
 * Portable. Secure Boot compatible.
 * 100% [Free Software](https://www.gnu.org/philosophy/free-sw) ([GPL v3](https://www.gnu.org/licenses/gpl-3.0))
 
-Compilation
------------
+For help with these, see the [Rufus FAQ](https://github.com/pbatard/rufus/wiki/FAQ): it applies to Mufus too.
 
-Use either Visual Studio 2026 or MinGW and then invoke the `.sln` or `configure`/`make` respectively.
+How it works
+------------
 
-#### Visual Studio
+Rufus keeps most of its state in global variables, so running several copies of its formatting code in
+the same process is not possible. Instead, Mufus performs all of the preparation work in the main
+application, and then starts one hidden copy of itself per drive, each running the unmodified Rufus
+formatting code against its own drive. Their logs, progress, prompts and results are relayed to the main
+application. Resources that the drives would otherwise compete for (drive letters, temporary files,
+offline registry hives, disk signatures, VHD sources, ...) are coordinated between them.
 
-Rufus is an OSI compliant Open Source project. You are entitled to
-download and use the *freely available* [Visual Studio Community Edition](https://www.visualstudio.com/vs/community/)
-to build, run or develop for Rufus. As per the Visual Studio Community Edition license,
-this applies regardless of whether you are an individual or a corporate user.
+Building
+--------
 
-Additional information
-----------------------
+Use Visual Studio 2026 (or 2022) or MinGW, and build the `.sln` or `configure`/`make` respectively, as
+for Rufus. For example, from a *Developer Command Prompt for VS 2022*:
 
-Rufus provides extensive information about what it is doing, either through its
-easily accessible log, or through the [Windows debug facility](https://docs.microsoft.com/en-us/sysinternals/downloads/debugview).
+```
+msbuild rufus.sln /m /p:Configuration=Release /p:Platform=x64 /p:PlatformToolset=v143
+```
 
-* [__Official Website__](https://rufus.ie)
-* [FAQ](https://github.com/pbatard/rufus/wiki/FAQ)
-* [Security and safety measures](https://github.com/pbatard/rufus/wiki/Security)
+The executable is `x64\Release\mufus.exe` (`/p:Platform=x86` for 32-bit). You are entitled to use the
+freely available [Visual Studio Community Edition](https://www.visualstudio.com/vs/community/) to build
+Mufus.
 
-Enhancements/Bugs
------------------
+The end-to-end tests of the multi-drive mode, which write to virtual disks, are described in
+[tests/e2e](tests/e2e/README.md).
 
-Please use the [GitHub issue tracker](https://github.com/pbatard/rufus/issues)
-for reporting problems or suggesting new features.
+Credits and license
+-------------------
+
+* Rufus is Copyright © 2011-2026 [Pete Batard](https://github.com/pbatard) and its many contributors.
+  See [rufus.ie](https://rufus.ie) and the About box for the full list of credits and licenses.
+* The multi-instance (multi-drive) functionality is Copyright © 2026 Sam Jackaman ([ExecSam](https://github.com/ExecSam)).
+* Like Rufus, Mufus is [Free Software](https://www.gnu.org/philosophy/free-sw), licensed under the
+  [GPL v3](https://www.gnu.org/licenses/gpl-3.0) or later. The full source code is in this repository.
