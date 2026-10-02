@@ -44,7 +44,7 @@
  */
 //#define RUFUS_TEST
 
-#define APPLICATION_NAME            "Rufus"
+#define APPLICATION_NAME            "Mufus"
 #if defined(_M_AMD64)
 #define APPLICATION_ARCH            "x64"
 #elif defined(_M_IX86)
@@ -56,7 +56,7 @@
 #else
 #define APPLICATION_ARCH            "(Unknown Arch)"
 #endif
-#define COMPANY_NAME                "Akeo Consulting"
+#define COMPANY_NAME                "ExecSam"
 #define STR_NO_LABEL                "NO_LABEL"
 #define LEFT_TO_RIGHT_MARK          "\u200e"
 #define RIGHT_TO_LEFT_MARK          "\u200f"
@@ -124,6 +124,7 @@
 #else
 #define RUFUS_URL                   "https://rufus.ie"
 #endif
+#define MUFUS_URL                   "https://github.com/ExecSam/Mufus"
 #define DOWNLOAD_URL                RUFUS_URL "/downloads"
 #define FILES_URL                   RUFUS_URL "/files"
 #define FILES_DIR                   APPLICATION_NAME
@@ -248,6 +249,11 @@ enum user_message_type {
 	UM_SELECT_ISO,
 	UM_TIMER_START,
 	UM_FORMAT_START,
+	// Mufus multi-drive messages
+	UM_MUFUS_UPDATE,
+	UM_MUFUS_PROMPT,
+	UM_MUFUS_SELECT,
+	UM_MUFUS_UPDATE_UI,
 	// Start of the WM IDs for the language menu items
 	UM_LANGUAGE_MENU = WM_APP + 0x100
 };
@@ -278,7 +284,9 @@ enum timer_type {
 	TID_APP_TIMER,
 	TID_BLOCKING_TIMER,
 	TID_REFRESH_TIMER,
-	TID_MARQUEE_TIMER
+	TID_MARQUEE_TIMER,
+	TID_MUFUS_CANCEL,
+	TID_MUFUS_PROMPT
 };
 
 /* Action type, for progress bar breakdown */

@@ -43,6 +43,7 @@
 #include "registry.h"
 #include "settings.h"
 #include "license.h"
+#include "mufus.h"
 #include "darkmode.h"
 
 /* Globals */
@@ -799,6 +800,14 @@ int NotificationEx(int type, const char* dont_display_setting, const notificatio
 	safe_vsnprintf(notification_data.szMessageText, LOC_MESSAGE_SIZE - 1, format, args);
 	va_end(args);
 	notification_data.szMessageText[LOC_MESSAGE_SIZE - 1] = 0;
+	// Mufus workers are invisible, so their prompts are displayed by the master
+	if (mufus_worker) {
+		ret = MufusWorkerPrompt(type, notification_data.szMessageTitle, notification_data.szMessageText);
+		safe_free(notification_data.szMessageText);
+		safe_free(notification_data.szMessageTitle);
+		dialog_showing--;
+		return (int)ret;
+	}
 	notification_data.more_info = more_info;
 	notification_data.type = type;
 	notification_data.dont_display_setting = dont_display_setting;
@@ -2239,7 +2248,14 @@ HWND MyCreateDialog(HINSTANCE hInstance, int Dialog_ID, HWND hWndParent, DLGPROC
 INT_PTR MyDialogBox(HINSTANCE hInstance, int Dialog_ID, HWND hWndParent, DLGPROC lpDialogFunc)
 {
 	INT_PTR ret;
-	LPCDLGTEMPLATE rcTemplate = GetDialogTemplate(Dialog_ID);
+	LPCDLGTEMPLATE rcTemplate;
+
+	// Mufus workers must never display anything
+	if (mufus_worker) {
+		uprintf("WARNING: Dialog %d was requested from a worker and has been cancelled", Dialog_ID);
+		return -1;
+	}
+	rcTemplate = GetDialogTemplate(Dialog_ID);
 
 	// A DialogBox doesn't handle reduce/restore so it won't pass restore messages to the
 	// main dialog if the main dialog was minimized. This can result in situations where the

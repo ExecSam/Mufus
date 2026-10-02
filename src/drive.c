@@ -37,6 +37,7 @@
 #include "missing.h"
 #include "resource.h"
 #include "settings.h"
+#include "mufus.h"
 #include "msapi_utf8.h"
 #include "localization.h"
 
@@ -1273,6 +1274,10 @@ char GetUnusedDriveLetter(void)
 {
 	DWORD size;
 	char drive_letter, *drive, drives[26*4 + 1];	/* "D:\", "E:\", etc., plus one NUL */
+
+	// Mufus workers must coordinate with each other for the letters they pick
+	if (mufus_worker)
+		return MufusGetUnusedDriveLetter();
 
 	size = GetLogicalDriveStringsA(sizeof(drives), drives);
 	if (size == 0) {
@@ -2559,6 +2564,11 @@ BOOL CreatePartition(HANDLE hDrive, int partition_style, int file_system, BOOL m
 		// drive in Rufus. As far as I can tell, Windows doesn't care much if this signature
 		// isn't unique for USB drives.
 		CreateDisk.Mbr.Signature = mbr_uefi_marker ? MBR_UEFI_MARKER : (DWORD)GetTickCount64();
+		// Mufus workers may partition drives at the same time => make sure their signatures differ.
+		// This includes the UEFI marker on fixed disks, since Windows takes a fixed disk offline when
+		// its signature collides with the one of another disk (and the marker is only informative).
+		if (mufus_worker && (!mbr_uefi_marker || (SelectedDrive.MediaType == FixedMedia)))
+			CreateDisk.Mbr.Signature = (DWORD)GetTickCount64() ^ ((SelectedDrive.DeviceNumber & 0xff) << 24);
 
 		DriveLayoutEx.PartitionStyle = PARTITION_STYLE_MBR;
 		DriveLayoutEx.PartitionCount = 4;	// Must be multiple of 4 for MBR

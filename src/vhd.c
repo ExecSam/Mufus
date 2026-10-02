@@ -43,6 +43,7 @@
 #include "drive.h"
 #include "wimlib.h"
 #include "registry.h"
+#include "mufus.h"
 #include "bled/bled.h"
 
 extern char* save_image_type;
@@ -397,6 +398,13 @@ char* VhdMountImageAndGetSize(const char* path, uint64_t* disk_size)
 	if (wpath == NULL)
 		return NULL;
 
+	// A VHD can only be mounted once, so Mufus workers use the one the master mounted
+	ret = MufusGetVhdSource(disk_size);
+	if (ret != NULL) {
+		wfree(path);
+		return ret;
+	}
+
 	if ((mounted_handle != NULL) && (mounted_handle != INVALID_HANDLE_VALUE))
 		VhdUnmountImage();
 
@@ -571,7 +579,7 @@ static DWORD WINAPI FfuSaveImageThread(void* param)
 	GetDriveLabel(SelectedDrive.DeviceNumber, letters, &label, TRUE);
 	static_sprintf(cmd, "%s\\dism.exe /Capture-Ffu /CaptureDrive:%s /ImageFile:\"%s\" "
 		"/Name:\"%s\" /Description:\"Created by %s (%s)\"", sysnative_dir,
-		img_save->DevicePath, img_save->ImagePath, label, APPLICATION_NAME, RUFUS_URL);
+		img_save->DevicePath, img_save->ImagePath, label, APPLICATION_NAME, MUFUS_URL);
 	uprintf("Running command: '%s'", cmd);
 	// For detecting typical dism.exe commandline progress report of type:
 	// "\r[====                       8.0%                           ]"

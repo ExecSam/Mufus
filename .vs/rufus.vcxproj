@@ -73,6 +73,7 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <PropertyGroup>
     <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
+    <TargetName>mufus</TargetName>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">$(SolutionDir)arm64\$(Configuration)\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">$(SolutionDir)arm64\$(Configuration)\$(ProjectName)\</IntDir>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">$(SolutionDir)arm64\$(Configuration)\</OutDir>
@@ -306,6 +307,7 @@
     <ClCompile Include="..\src\icon.c" />
     <ClCompile Include="..\src\iso.c" />
     <ClCompile Include="..\src\localization.c" />
+    <ClCompile Include="..\src\mufus.c" />
     <ClCompile Include="..\src\net.c" />
     <ClCompile Include="..\src\parser.c" />
     <ClCompile Include="..\src\pki.c" />
@@ -328,6 +330,7 @@
     <ClInclude Include="..\res\grub2\grub2_version.h" />
     <ClInclude Include="..\res\grub\grub_version.h" />
     <ClInclude Include="..\src\badblocks.h" />
+    <ClInclude Include="..\src\mufus.h" />
     <ClInclude Include="..\src\bled\bled.h" />
     <ClInclude Include="..\src\cregex.h" />
     <ClInclude Include="..\src\darkmode.h" />

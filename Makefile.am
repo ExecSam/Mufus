@@ -13,5 +13,5 @@ release: all
 	@sleep 1
 	@$(STRIP) $(TARGET)$(EXEEXT)
 	@upx --lzma --best $(TARGET)$(EXEEXT)
-	@mv $(TARGET)$(EXEEXT) $(TARGET)-$(VERSION)$(SUFFIX)$(EXEEXT)
-	@cmd.exe //c _sign.cmd $(TARGET)-$(VERSION)$(SUFFIX)$(EXEEXT)
+	@mv $(TARGET)$(EXEEXT) mufus-$(VERSION)$(SUFFIX)$(EXEEXT)
+	@cmd.exe //c _sign.cmd mufus-$(VERSION)$(SUFFIX)$(EXEEXT)

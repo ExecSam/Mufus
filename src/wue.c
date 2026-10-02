@@ -35,6 +35,7 @@
 #include "msapi_utf8.h"
 #include "timezoneapi.h"
 #include "localization.h"
+#include "mufus.h"
 
  /* Memory leaks detection - define _CRTDBG_MAP_ALLOC as preprocessor macro */
 #ifdef _CRTDBG_MAP_ALLOC
@@ -1119,7 +1120,7 @@ BOOL ApplyWindowsCustomization(char drive_letter, int flags)
 {
 	BOOL r = FALSE, is_hive_mounted = FALSE, update_boot_wim = FALSE;
 	int i, wim_index = 2, wuc_index = 0, num_replaced = 0;
-	const char* offline_hive_name = "RUFUS_OFFLINE_HIVE";
+	const char* offline_hive_name = MufusHiveName("RUFUS_OFFLINE_HIVE");
 	const char* reg_path = "Windows\\System32\\config\\SYSTEM";
 	const char* efi_ex_path = "Windows\\Boot\\EFI_EX";
 	const char* fonts_ex_path = "Windows\\Boot\\Fonts_EX";

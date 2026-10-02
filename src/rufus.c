@@ -53,6 +53,7 @@
 #include "cregex.h"
 #include "settings.h"
 #include "darkmode.h"
+#include "mufus.h"
 #include "bled/bled.h"
 #include "cdio/logging.h"
 #include "../res/grub/grub_version.h"
@@ -65,12 +66,12 @@ enum bootcheck_return {
 	BOOTCHECK_GENERAL_ERROR = -3,
 };
 
-static const char* cmdline_hogger = ".\\rufus.com";
+static const char* cmdline_hogger = ".\\mufus.com";
 static const char* vs_reg = "Software\\Microsoft\\VisualStudio";
 static const char* arch_name[ARCH_MAX] = {
 	"unknown", "x86_32", "x86_64", "ARM", "ARM64", "IA64", "RISC-V 64", "LoongArch 64", "EBC" };
 static BOOL existing_key = FALSE;	// For LGP set/restore
-static BOOL size_check = TRUE;
+BOOL size_check = TRUE;
 static BOOL log_displayed = FALSE;
 static BOOL img_provided = FALSE;
 static BOOL user_notified = FALSE;
@@ -445,16 +446,12 @@ static BOOL IsRefsAvailable(MEDIA_TYPE MediaType)
 	}
 }
 
-// Populate the File System and Cluster Size dropdowns
-static BOOL SetFileSystemAndClusterSize(char* fs_name)
+// Compute the allowed and default cluster sizes of the selected drive, for each file system
+void ComputeClusterSizes(void)
 {
 	int fs_index;
 	LONGLONG i;
-	char tmp[128] = "", *entry;
 
-	IGNORE_RETVAL(ComboBox_ResetContent(hFileSystem));
-	IGNORE_RETVAL(ComboBox_ResetContent(hClusterSize));
-	default_fs = FS_UNKNOWN;
 	memset(&SelectedDrive.ClusterSize, 0, sizeof(SelectedDrive.ClusterSize));
 
 /*
@@ -576,10 +573,6 @@ static BOOL SetFileSystemAndClusterSize(char* fs_name)
 		}
 	}
 
-	// Only add the filesystems we can service
-	SetAllowedFileSystems();
-	SetClusterSizeLabels();
-
 	for (fs_index = 0; fs_index < FS_MAX; fs_index++) {
 		// Remove all cluster sizes that are below the sector size
 		if (SelectedDrive.ClusterSize[fs_index].Allowed != SINGLE_CLUSTERSIZE_DEFAULT) {
@@ -589,7 +582,26 @@ static BOOL SetFileSystemAndClusterSize(char* fs_name)
 				SelectedDrive.ClusterSize[fs_index].Default =
 				SelectedDrive.ClusterSize[fs_index].Allowed & (-(LONG)SelectedDrive.ClusterSize[fs_index].Allowed);
 		}
+	}
+}
 
+// Populate the File System and Cluster Size dropdowns
+static BOOL SetFileSystemAndClusterSize(char* fs_name)
+{
+	int fs_index;
+	LONGLONG i;
+	char tmp[128] = "", *entry;
+
+	IGNORE_RETVAL(ComboBox_ResetContent(hFileSystem));
+	IGNORE_RETVAL(ComboBox_ResetContent(hClusterSize));
+	default_fs = FS_UNKNOWN;
+	ComputeClusterSizes();
+
+	// Only add the filesystems we can service
+	SetAllowedFileSystems();
+	SetClusterSizeLabels();
+
+	for (fs_index = 0; fs_index < FS_MAX; fs_index++) {
 		if (SelectedDrive.ClusterSize[fs_index].Allowed != 0) {
 			tmp[0] = 0;
 			// Tell the user if we're going to use Large FAT32 or regular
@@ -896,6 +908,9 @@ void EnableControls(BOOL enable, BOOL remove_checkboxes)
 	EnableWindow(GetDlgItem(hMainDialog, IDS_CSM_HELP_TXT), enable);
 	EnableWindow(hFileSystem, enable);
 	EnableWindow(hClusterSize, enable);
+
+	// Update the Mufus multi-drive controls
+	MufusUpdateUI();
 }
 
 // Populate the UI main dropdown properties.
@@ -958,7 +973,7 @@ BOOL CALLBACK LogCallback(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 	LONG_PTR style;
 	DWORD log_size;
 	char *log_buffer = NULL, *filepath;
-	EXT_DECL(log_ext, "rufus.log", __VA_GROUP__("*.log"), __VA_GROUP__("Rufus log"));
+	EXT_DECL(log_ext, "mufus.log", __VA_GROUP__("*.log"), __VA_GROUP__("Mufus log"));
 	switch (message) {
 	case WM_INITDIALOG:
 		SetDarkModeForDlg(hDlg);
@@ -2111,6 +2126,7 @@ static void InitDialog(HWND hDlg)
 	CharUpperBuffU(uppercase_cancel, sizeof(uppercase_cancel));
 
 	CreateSmallButtons(hDlg);
+	MufusCreateToolbar(hDlg);
 	GetBasicControlsWidth(hDlg);
 	GetMainButtonsWidth(hDlg);
 	GetHalfDropwdownWidth(hDlg);
@@ -2138,8 +2154,8 @@ static void InitDialog(HWND hDlg)
 	static_sprintf(tmp, APPLICATION_NAME " %d.%d.%d%s%s", rufus_version[0], rufus_version[1], rufus_version[2],
 		IsAlphaOrBeta(), (ini_file != NULL)?"(Portable)":"");
 	SetWindowTextU(hDlg, tmp);
-	// Now that we have a title, we can find the handle of our Dialog
-	dialog_handle = FindWindowA(NULL, tmp);
+	// Use our own handle, rather than look it up by title (which may match another window)
+	dialog_handle = hDlg;
 	// Add a timestamp in persistent log mode
 	if (persistent_log) {
 		__time64_t ltime;
@@ -2228,6 +2244,7 @@ static void InitDialog(HWND hDlg)
 	SetSectionHeaders(hDlg, &hSectionHeaderFont);
 	PositionMainControls(hDlg);
 	AdjustForLowDPI(hDlg);
+	MufusInit(hDlg);
 	// Because we created the log dialog before we computed our sizes, we need to send a custom message
 	SendMessage(hLogDialog, UM_RESIZE_BUTTONS, 0, 0);
 	// Limit the amount of characters for the Persistence size field
@@ -2308,11 +2325,18 @@ static INT_PTR CALLBACK MainCallback(HWND hDlg, UINT message, WPARAM wParam, LPA
 	PAINTSTRUCT ps;
 	DWORD log_size;
 	int nDeviceIndex, i, nWidth, nHeight, nb_devices, selected_language, offset, tb_state, tb_flags;
+	BOOL was_multi;
 	char tmp[MAX_PATH], *log_buffer = NULL;
 	wchar_t* wbuffer = NULL;
 	loc_cmd* lcmd = NULL;
 
 	switch (message) {
+
+	case UM_MUFUS_UPDATE:
+	case UM_MUFUS_PROMPT:
+	case UM_MUFUS_SELECT:
+	case UM_MUFUS_UPDATE_UI:
+		return MufusHandleMessage(hDlg, message, wParam, lParam);
 
 	case WM_COMMAND:
 #ifdef RUFUS_TEST
@@ -2382,7 +2406,7 @@ static INT_PTR CALLBACK MainCallback(HWND hDlg, UINT message, WPARAM wParam, LPA
 					IGNORE_RETVAL(_chdirU(app_data_dir));
 					IGNORE_RETVAL(_mkdir(FILES_DIR));
 					IGNORE_RETVAL(_chdir(FILES_DIR));
-					FileIO(persistent_log ? FILE_IO_APPEND : FILE_IO_WRITE, "rufus.log", &log_buffer, &log_size);
+					FileIO(persistent_log ? FILE_IO_APPEND : FILE_IO_WRITE, "mufus.log", &log_buffer, &log_size);
 				}
 				safe_free(log_buffer);
 			}
@@ -2737,8 +2761,11 @@ static INT_PTR CALLBACK MainCallback(HWND hDlg, UINT message, WPARAM wParam, LPA
 				}
 			}
 			break;
+		case IDC_MULTI_DRIVE:
+			MufusToggleMultiMode();
+			break;
 		case IDC_SAVE:
-			if (format_thread == NULL && (ComboBox_GetCurSel(hDeviceList) >= 0)) {
+			if (format_thread == NULL && !multi_mode && (ComboBox_GetCurSel(hDeviceList) >= 0)) {
 				save_image = SaveImage();
 				if (!save_image) {
 					uprintf("Unable to start image save thread");
@@ -2939,6 +2966,7 @@ static INT_PTR CALLBACK MainCallback(HWND hDlg, UINT message, WPARAM wParam, LPA
 		return (INT_PTR)GetSysColorBrush(COLOR_BTNFACE);
 
 	case WM_DESTROY:
+		MufusExit();
 		safe_destroy_imagelist_from_toolbar(hSaveToolbar);
 		safe_destroy_imagelist_from_toolbar(hHashToolbar);
 		safe_destroy_imagelist_from_toolbar(hMultiToolbar);
@@ -2981,6 +3009,10 @@ static INT_PTR CALLBACK MainCallback(HWND hDlg, UINT message, WPARAM wParam, LPA
 				break;
 			case IDC_HASH:
 				utf8_to_wchar_no_alloc(lmprintf(MSG_272), wtooltip, ARRAYSIZE(wtooltip));
+				lpttt->lpszText = wtooltip;
+				break;
+			case IDC_MULTI_DRIVE:
+				utf8_to_wchar_no_alloc(MufusGetTooltip(), wtooltip, ARRAYSIZE(wtooltip));
 				lpttt->lpszText = wtooltip;
 				break;
 			}
@@ -3098,6 +3130,13 @@ static INT_PTR CALLBACK MainCallback(HWND hDlg, UINT message, WPARAM wParam, LPA
 		wParam = BOOTCHECK_CANCEL;
 		save_image = FALSE;
 
+		// In multi-drive mode, the following checks and prompts apply to all of the selected drives
+		if (multi_mode) {
+			if (!MufusConfirmFormat())
+				goto aborted_start;
+			goto confirmed_start;
+		}
+
 		if ((partition_type == PARTITION_STYLE_MBR) && (SelectedDrive.DiskSize > 2 * TB)) {
 			if (Notification(MB_YESNO | MB_ICONWARNING, lmprintf(MSG_128, "MBR"),
 				lmprintf(MSG_134, SizeToHumanReadable(SelectedDrive.DiskSize - 2 * TB, FALSE, FALSE))) != IDYES)
@@ -3138,10 +3177,14 @@ static INT_PTR CALLBACK MainCallback(HWND hDlg, UINT message, WPARAM wParam, LPA
 			(Notification(MB_OKCANCEL | MB_ICONWARNING, lmprintf(MSG_197), lmprintf(MSG_196, SelectedDrive.SectorSize)) != IDOK))
 			goto aborted_start;
 
+	confirmed_start:
 		nDeviceIndex = ComboBox_GetCurSel(hDeviceList);
 		DeviceNum = (DWORD)ComboBox_GetItemData(hDeviceList, nDeviceIndex);
 		InitProgress(zero_drive || write_as_image);
-		format_thread = CreateThread(NULL, 0, FormatThread, (LPVOID)(uintptr_t)DeviceNum, 0, NULL);
+		// In multi-drive mode, a supervisor thread, that manages one worker process per drive,
+		// takes the place of the format thread
+		format_thread = multi_mode ? MufusStartFormat() :
+			CreateThread(NULL, 0, FormatThread, (LPVOID)(uintptr_t)DeviceNum, 0, NULL);
 		if (format_thread == NULL) {
 			uprintf("Unable to start formatting thread");
 			ErrorStatus = RUFUS_ERROR(APPERR(ERROR_CANT_START_THREAD));
@@ -3176,6 +3219,7 @@ static INT_PTR CALLBACK MainCallback(HWND hDlg, UINT message, WPARAM wParam, LPA
 	case UM_FORMAT_COMPLETED:
 		zero_drive = FALSE;
 		format_thread = NULL;
+		was_multi = MufusFormatCompleted();
 		if (unattend_xml_path != NULL) {
 			DeleteFileU(unattend_xml_path);
 			unattend_xml_path = NULL;
@@ -3209,6 +3253,11 @@ static INT_PTR CALLBACK MainCallback(HWND hDlg, UINT message, WPARAM wParam, LPA
 			PrintInfo(0, MSG_212);
 			MessageBeep(MB_ICONERROR);
 			FlashTaskbar(dialog_handle);
+			if (was_multi) {
+				// The diagnostics below only apply to a single drive
+				MufusShowResults();
+				goto format_completed;
+			}
 			GetProcessSearch(0, 0x07, TRUE);
 			// TODO: Fix/Improve this
 			if (BlockingProcessList.Index > 0) {
@@ -3254,6 +3303,7 @@ static INT_PTR CALLBACK MainCallback(HWND hDlg, UINT message, WPARAM wParam, LPA
 				Notification(MB_ICONERROR | MB_CLOSE, lmprintf(MSG_042), lmprintf(MSG_043, StrError(ErrorStatus, FALSE)));
 			}
 		}
+	format_completed:
 		ErrorStatus = 0;
 		LastWriteError = 0;
 		return (INT_PTR)TRUE;
@@ -3271,7 +3321,7 @@ static void PrintUsage(char* appname)
 	printf("  -x, --extra-devs\n");
 	printf("     List extra devices, such as USB HDDs\n");
 	printf("  -g, --gui\n");
-	printf("     Start in GUI mode (disable the 'rufus.com' commandline hogger)\n");
+	printf("     Start in GUI mode (disable the 'mufus.com' commandline hogger)\n");
 	printf("  -i PATH, --iso=PATH\n");
 	printf("     Select the ISO image pointed by PATH to be used on startup\n");
 	printf("  -l LOCALE, --locale=LOCALE\n");
@@ -3355,8 +3405,8 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 #endif
 {
-	const char* rufus_loc = "rufus.loc";
-	int i, opt, option_index = 0, argc = 0, si = 0, lcid = GetUserDefaultUILanguage();
+	const char* rufus_loc = "mufus.loc";
+	int i, opt, option_index = 0, argc = 0, si = 0, lcid = GetUserDefaultUILanguage(), exit_code = 0;
 	int wait_for_mutex = 0, forced_windows_version = 0;
 	uint32_t wue_options;
 	FILE* fd;
@@ -3369,7 +3419,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	char *tmp, *locale_name = NULL, **argv = NULL;
 	wchar_t **wenv, **wargv;
 	PF_TYPE_DECL(CDECL, int, __wgetmainargs, (int*, wchar_t***, wchar_t***, int, int*));
-	HANDLE mutex = NULL, hogmutex = NULL, hFile = NULL;
+	HANDLE mutex = NULL, rufus_mutex = NULL, hogmutex = NULL, hFile = NULL;
 	HWND hDlg = NULL;
 	HDC hDC;
 	MSG msg;
@@ -3509,12 +3559,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	uprintf("Dat dir: '%s'", app_data_dir);
 	uprintf("Tmp dir: '%s'", temp_dir);
 
+	// Mufus worker processes are started by the UI process, with their own arguments
+	if (MufusParseWorkerArgs())
+		goto skip_args_processing;
+
 	// Look for a rufus.app file in the current app directory
 	// Since Microsoft makes it downright impossible to pass an arg in the app manifest
 	// and the automated VS2019 package building process doesn't like renaming the .exe
 	// right under its nose (else we would use the same trick as for portable vs regular)
 	// we use yet another workaround to detect if we are running the AppStore version...
-	static_sprintf(tmp_path, "%srufus.app", app_dir);
+	static_sprintf(tmp_path, "%smufus.app", app_dir);
 	if (PathFileExistsU(tmp_path)) {
 		appstore_version = TRUE;
 		goto skip_args_processing;
@@ -3647,7 +3701,7 @@ skip_args_processing:
 		uprintf("AppStore version detected");
 
 	// Look for a .ini file in the current app directory
-	static_sprintf(ini_path, "%srufus.ini", app_dir);
+	static_sprintf(ini_path, "%smufus.ini", app_dir);
 	fd = fopenU(ini_path, ini_flags);	// Will create the file if portable mode is requested
 #if !defined(ALPHA)
 	// Using the string directly in safe_strcmp() would call GetSignatureName() twice
@@ -3682,7 +3736,8 @@ skip_args_processing:
 	advanced_mode_format = ReadSettingBool(SETTING_ADVANCED_MODE_FORMAT);
 	preserve_timestamps = ReadSettingBool(SETTING_PRESERVE_TIMESTAMPS);
 	use_fake_units = !ReadSettingBool(SETTING_USE_PROPER_SIZE_UNITS);
-	is_vds_available = IsVdsAvailable(FALSE);
+	// Mufus workers get this from the master, as probing VDS can be slow when it is busy
+	is_vds_available = mufus_worker ? TRUE : IsVdsAvailable(FALSE);
 	use_vds = ReadSettingBool(SETTING_USE_VDS) && is_vds_available;
 	usb_debug = ReadSettingBool(SETTING_ENABLE_USB_DEBUG);
 	cdio_loglevel_default = usb_debug ? CDIO_LOG_INFO : CDIO_LOG_WARN;
@@ -3794,6 +3849,9 @@ skip_args_processing:
 	// in which case we wait for the mutex to be relinquished
 	if ((safe_strlen(lpCmdLine) == 2) && (lpCmdLine[0] == '/') && (lpCmdLine[1] == 'W'))
 		wait_for_mutex = 150;		// Try to acquire the mutex for 15 seconds
+	// Mufus workers run alongside the UI process, so they must not try to acquire its mutex
+	if (mufus_worker)
+		goto skip_mutex;
 	mutex = CreateMutexA(NULL, TRUE, "Global/" APPLICATION_NAME);
 	for (;(wait_for_mutex>0) && (mutex != NULL) && (GetLastError() == ERROR_ALREADY_EXISTS); wait_for_mutex--) {
 		CloseHandle(mutex);
@@ -3809,7 +3867,17 @@ skip_args_processing:
 			MB_ICONERROR | MB_IS_RTL | MB_SYSTEMMODAL, selected_langid);
 		goto out;
 	}
+	// Nor can Mufus run alongside the official Rufus
+	rufus_mutex = MufusAcquireRufusMutex(wait_for_mutex);
+	if (rufus_mutex == NULL) {
+		get_loc_data_file(loc_file, selected_locale);
+		right_to_left_mode = ((selected_locale->ctrl_id) & LOC_RIGHT_TO_LEFT);
+		MessageBoxExU(NULL, MUFUS_STR_RUFUS_RUNNING, lmprintf(MSG_001),
+			MB_ICONERROR | MB_IS_RTL | MB_SYSTEMMODAL, selected_langid);
+		goto out;
+	}
 
+skip_mutex:
 	// Save instance of the application for further reference
 	hMainInstance = hInstance;
 
@@ -3824,17 +3892,20 @@ skip_args_processing:
 	// the Windows Services preventing access to the disk or volume we want to format.
 	EnablePrivileges();
 
-	// 0x9e disables removable and fixed drive notifications
-	ndta_set = SetNDTA(FALSE, &existing_key, 0x9e);
+	// Mufus workers leave the system-wide settings below to the UI process
+	if (!mufus_worker) {
+		// 0x9e disables removable and fixed drive notifications
+		ndta_set = SetNDTA(FALSE, &existing_key, 0x9e);
 
-	// Re-enable AutoMount if needed
-	if (!GetAutoMount(&automount)) {
-		uprintf("Could not get AutoMount status");
-		automount = TRUE;	// So that we don't try to change its status on exit
-	} else if (!automount) {
-		uprintf("AutoMount was detected as disabled - temporarily re-enabling it");
-		if (!SetAutoMount(TRUE))
-			uprintf("Failed to enable AutoMount");
+		// Re-enable AutoMount if needed
+		if (!GetAutoMount(&automount)) {
+			uprintf("Could not get AutoMount status");
+			automount = TRUE;	// So that we don't try to change its status on exit
+		} else if (!automount) {
+			uprintf("AutoMount was detected as disabled - temporarily re-enabling it");
+			if (!SetAutoMount(TRUE))
+				uprintf("Failed to enable AutoMount");
+		}
 	}
 
 	// Detect CPU acceleration for SHA-1/SHA-256
@@ -3858,15 +3929,18 @@ relaunch:
 	select_index = 0;
 	safe_free(fido_url);
 	SetProcessDefaultLayout(right_to_left_mode ? LAYOUT_RTL : 0);
-	if (get_loc_data_file(loc_file, selected_locale))
+	if (get_loc_data_file(loc_file, selected_locale) && !mufus_worker)
 		WriteSettingStr(SETTING_LOCALE, selected_locale->txt[0]);
 
-	if (!vc) {
-		if (MessageBoxExU(NULL, lmprintf(MSG_296), lmprintf(MSG_295),
-			MB_YESNO | MB_ICONWARNING | MB_IS_RTL | MB_SYSTEMMODAL, selected_langid) != IDYES)
-			goto out;
-		vc = TRUE;
+	// Mufus workers have no UI and go straight to writing their drive
+	if (mufus_worker) {
+		exit_code = MufusWorkerMain();
+		goto out;
 	}
+
+	// Mufus is a fork of Rufus, so it is never signed by the official Rufus developer(s),
+	// and warning about it on every launch, as Rufus does for unofficial builds, is moot.
+	(void)vc;
 
 	/*
 	 * Create the main Window
@@ -4336,13 +4410,14 @@ out:
 	}
 	CoUninitialize();
 	CLOSE_OPENED_LIBRARIES;
+	safe_closehandle(rufus_mutex);
 	safe_closehandle(mutex);
 	uprintf("*** " APPLICATION_NAME " exit ***\n");
 #ifdef _CRTDBG_MAP_ALLOC
 	_CrtDumpMemoryLeaks();
 #endif
 
-	return 0;
+	return exit_code;
 }
 
 /*

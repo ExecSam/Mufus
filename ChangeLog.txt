@@ -1,3 +1,8 @@
+o Mufus 4.15 (2026.10.02) - based on Rufus 4.15, by Sam Jackaman (ExecSam)
+    Add multi-drive mode, to write the same image and options to up to 10 drives concurrently
+    Add a per-drive progress window, and per-drive validation and results
+    Rename the application to Mufus, and do not offer to update to the official Rufus releases
+
 o Version 4.15 (2026.06.30)
     Add RISC-V 64 support to UEFI:NTFS
     Improve the guards for using the "silent" Windows installation option

@@ -182,7 +182,7 @@ BOOL SetAutorun(const char* path)
 	GetWindowTextW(hLabel, wlabel, ARRAYSIZE(wlabel));
 	GetWindowTextW(hMainDialog, wRufusVersion, ARRAYSIZE(wRufusVersion));
 	// coverity[invalid_type]
-	fwprintf_s(fd, L"; Created by %s\n; " LTEXT(RUFUS_URL) L"\n", wRufusVersion);
+	fwprintf_s(fd, L"; Created by %s\n; " LTEXT(MUFUS_URL) L"\n", wRufusVersion);
 	// coverity[invalid_type]
 	fwprintf_s(fd, L"[autorun]\nicon  = autorun.ico\nlabel = %s\n", wlabel);
 	fclose(fd);

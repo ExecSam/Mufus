@@ -30,7 +30,7 @@ echo "setting micro to $BUILD"
 cat > cmd.sed <<\_EOF
 s/^\([ \t]*\)*\(FILE\|PRODUCT\)VERSION\([ \t]*\)\([0-9]*\),\([0-9]*\),[0-9]*,\(.*\)/\1\2VERSION\3\4,\5,@@BUILD@@,\6/
 s/^\([ \t]*\)VALUE\([ \t]*\)"\(File\|Product\)Version",\([ \t]*\)"\(.*\)\..*"[ \t]*/\1VALUE\2"\3Version",\4"\5.@@BUILD@@"/
-s/^\(.*\)"Rufus \(.*\)\..*"\(.*\)/\1"Rufus \2.@@BUILD@@"\3/
+s/^\(.*\)"Mufus \(.*\)\..*"\(.*\)/\1"Mufus \2.@@BUILD@@"\3/
 s/^\([ \t]*\)Version="\([0-9]*\)\.\([0-9]*\)\.[0-9]*\.\([0-9]*\)"\(.*\)/\1Version="\2.\3.@@BUILD@@.\4"\5/
 s/\xef\xbf\xbd/\xa9/
 _EOF

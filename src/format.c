@@ -47,6 +47,7 @@
 #include "br.h"
 #include "vhd.h"
 #include "wue.h"
+#include "mufus.h"
 #include "fat16.h"
 #include "fat32.h"
 #include "ntfs.h"
@@ -633,6 +634,13 @@ static BOOL FormatNative(DWORD DriveIndex, uint64_t PartitionOffset, DWORD Clust
 		if (!IS_ERROR(ErrorStatus) || (HRESULT_CODE(ErrorStatus) == ERROR_CANCELLED))
 			break;
 		uprintf("%s - Retrying...", WindowsErrorString());
+		// FormatExCallback() aborts as soon as ErrorStatus is set, so Mufus workers clear it for
+		// the retry to actually be attempted (cancellation is re-asserted by the worker's timer).
+		if (mufus_worker && (i < WRITE_RETRIES - 1)) {
+			if (HRESULT_CODE(ErrorStatus) == ERROR_DEVICE_IN_USE)
+				MufusFormatInUse(DriveIndex, PartitionOffset);
+			ErrorStatus = 0;
+		}
 		Sleep(WRITE_TIMEOUT);
 	}
 	if (IS_ERROR(ErrorStatus))
@@ -1531,7 +1539,9 @@ DWORD WINAPI FormatThread(void* param)
 	// for VDS to be able to delete the partitions that reside on it...
 	safe_unlockclose(hPhysicalDrive);
 	PrintInfo(0, MSG_239, lmprintf(MSG_307));
-	if (!is_vds_available || !DeletePartition(DriveIndex, 0, TRUE)) {
+	if (mufus_worker && MufusDriveHasNoPartitions(DriveIndex)) {
+		uprintf("Drive has no partitions to delete");
+	} else if (!is_vds_available || !DeletePartition(DriveIndex, 0, TRUE)) {
 		uprintf("WARNING: Could not delete partition(s): %s", is_vds_available ? WindowsErrorString() : "VDS is not available");
 		SetLastError(ErrorStatus);
 		ErrorStatus = 0;
@@ -1595,6 +1605,8 @@ try_clear:
 				uprintf("Cycling the device to see if it helps...");
 				// Note: This may leave the device disabled on re-plug or reboot
 				// so only do this for the experimental VDS path for now...
+				if (mufus_worker)
+					MufusBeginCycle();
 				cr = CycleDevice(ComboBox_GetCurSel(hDeviceList));
 				if (cr == ERROR_DEVICE_REINITIALIZATION_NEEDED) {
 					uprintf("Zombie device detected, trying again...");
@@ -1605,6 +1617,11 @@ try_clear:
 					uprintf("Successfully cycled device");
 				else
 					uprintf("Cycling device failed!");
+				// Mufus workers must make sure that the disk number still designates their drive
+				if (mufus_worker && !MufusEndCycle(DriveIndex)) {
+					ErrorStatus = RUFUS_ERROR(ERROR_DEV_NOT_EXIST);
+					goto out;
+				}
 				Sleep(1000);
 				retry_clear = FALSE;
 				goto try_clear;
@@ -1626,8 +1643,12 @@ try_clear:
 			safe_free(userdir);
 			GetLocalTime(&lt);
 			safe_sprintf(&logfile[strlen(logfile)], sizeof(logfile) - strlen(logfile) - 1,
-				"\\rufus_%04d%02d%02d_%02d%02d%02d.log",
+				"\\mufus_%04d%02d%02d_%02d%02d%02d.log",
 				lt.wYear, lt.wMonth, lt.wDay, lt.wHour, lt.wMinute, lt.wSecond);
+			// Mufus workers can start a bad blocks check at the same time => add the drive number
+			if (mufus_worker)
+				safe_sprintf(&logfile[strlen(logfile) - 4], sizeof(logfile) - strlen(logfile) + 3,
+					"_disk%lu.log", DriveIndex - DRIVE_INDEX_MIN);
 			log_fd = fopenU(logfile, "w+");
 			if (log_fd == NULL) {
 				uprintf("Error: Could not create log file for bad blocks check");
@@ -1735,6 +1756,8 @@ try_clear:
 		// Note: This may leave the device disabled on re-plug or reboot
 		// so only do this for the experimental VDS path for now...
 		uprintf("Cycling device...");
+		if (mufus_worker)
+			MufusBeginCycle();
 		cr = CycleDevice(ComboBox_GetCurSel(hDeviceList));
 		if (cr == ERROR_DEVICE_REINITIALIZATION_NEEDED) {
 			uprintf("Zombie device detected, trying again...");
@@ -1745,11 +1768,19 @@ try_clear:
 			uprintf("Successfully cycled device");
 		else
 			uprintf("Cycling device failed!");
+		// Mufus workers must make sure that the disk number still designates their drive
+		if (mufus_worker && !MufusEndCycle(DriveIndex)) {
+			ErrorStatus = RUFUS_ERROR(ERROR_DEV_NOT_EXIST);
+			goto out;
+		}
 	}
 	if (is_vds_available) {
 		// This one should be safe to issue unconditionally
 		uprintf("Refreshing drive layout...");
-		RefreshLayout(DriveIndex);
+		if (mufus_worker)
+			MufusRefreshLayout();
+		else
+			RefreshLayout(DriveIndex);
 	}
 
 	// Wait for the logical drive we just created to appear
@@ -2065,7 +2096,8 @@ out:
 			safe_closehandle(hPhysicalDrive);
 		}
 	}
-	if (IS_ERROR(ErrorStatus)) {
+	// NB: Mufus workers must not remount anything if their disk number now designates another drive
+	if (IS_ERROR(ErrorStatus) && !(mufus_worker && (SCODE_CODE(ErrorStatus) == ERROR_DEV_NOT_EXIST))) {
 		volume_name = GetLogicalName(DriveIndex, SelectedDrive.Partition[partition_index[PI_MAIN]].Offset, TRUE, TRUE);
 		if (volume_name != NULL) {
 			if (MountVolume(drive_name, volume_name))

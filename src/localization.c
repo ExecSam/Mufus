@@ -35,6 +35,7 @@
 #include "msapi_utf8.h"
 #include "localization.h"
 #include "localization_data.h"
+#include "mufus.h"
 
 /*
  * List of supported locale commands, with their parameter syntax:
@@ -420,10 +421,14 @@ static char *output_msg[2];
 static uint64_t last_msg_time[2] = { 0, 0 };
 
 static void PrintInfoMessage(char* msg) {
+	if (mufus_worker)
+		MufusWorkerInfo(TRUE, msg);
 	SetWindowTextU(hProgress, msg);
 	InvalidateRect(hProgress, NULL, TRUE);
 }
 static void PrintStatusMessage(char* msg) {
+	if (mufus_worker)
+		MufusWorkerInfo(FALSE, msg);
 	SendMessageLU(hStatus, SB_SETTEXTW, SBT_OWNERDRAW | SB_SECTION_LEFT, msg);
 }
 typedef void PRINT_FUNCTION(char*);

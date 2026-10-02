@@ -588,6 +588,14 @@ static DWORD WINAPI CheckForUpdatesThread(LPVOID param)
 	PrintInfoDebug(3000, MSG_352);
 	CheckForDBXUpdates(verbose);
 
+	// Mufus does not use the Rufus release channel, as this would offer to replace
+	// Mufus with the official Rufus. The DBX update check above is still performed,
+	// and we record the time of this check, so that it only occurs once per interval.
+	GetSystemTime(&LocalTime);
+	if (SystemTimeToFileTime(&LocalTime, &FileTime))
+		WriteSetting64(SETTING_LAST_UPDATE, ((((int64_t)FileTime.dwHighDateTime) << 32) + FileTime.dwLowDateTime) / 10000000);
+	goto out;
+
 	PrintInfoDebug(3000, MSG_243);
 	status++;	// 1
 

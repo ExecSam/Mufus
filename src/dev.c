@@ -39,6 +39,7 @@
 #include "missing.h"
 #include "resource.h"
 #include "settings.h"
+#include "mufus.h"
 #include "msapi_utf8.h"
 #include "localization.h"
 
@@ -1068,6 +1069,9 @@ BOOL GetDevices(DWORD devnum)
 	}
 	// Adjust the Dropdown width to the maximum text size
 	SendMessage(hDeviceList, CB_SETDROPPEDWIDTH, (WPARAM)maxwidth, 0);
+
+	// Let Mufus drop the drives that went away from the multi-drive selection
+	devnum = MufusOnDevicesRefreshed(devnum, num_drives);
 
 	if (devnum >= DRIVE_INDEX_MIN) {
 		for (i = 0; i < ComboBox_GetCount(hDeviceList); i++) {

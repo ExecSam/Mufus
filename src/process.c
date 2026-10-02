@@ -35,6 +35,7 @@
 #include "ntdll.h"
 #include "missing.h"
 #include "msapi_utf8.h"
+#include "mufus.h"
 
 PF_TYPE_DECL(NTAPI, NTSTATUS, NtWow64QueryInformationProcess64, (HANDLE, ULONG, PVOID, ULONG, PULONG));
 PF_TYPE_DECL(NTAPI, NTSTATUS, NtWow64ReadVirtualMemory64, (HANDLE, ULONGLONG, PVOID, ULONG64, PULONG64));
@@ -906,6 +907,15 @@ BYTE GetProcessSearch(uint32_t timeout, uint8_t access_mask, BOOL bIgnoreStalePr
 	if (hSearchProcessThread == NULL) {
 		uprintf("Process search thread is not started!");
 		return 0;
+	}
+
+	// Mufus workers only search for conflicting processes when they need to, as having up to
+	// 10 searches running in parallel, for the whole duration of the operation, is too costly.
+	// But then, the search has to complete a first pass, which takes longer than a refresh.
+	if (mufus_worker && !blocking_process.bActive) {
+		SetProcessSearch(SelectedDrive.DeviceNumber);
+		if (timeout != 0)
+			timeout = max(timeout, 3 * SEARCH_PROCESS_TIMEOUT);
 	}
 
 	if_assert_fails(blocking_process.hLock != NULL)

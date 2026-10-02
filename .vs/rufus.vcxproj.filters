@@ -63,6 +63,9 @@
     <ClCompile Include="..\src\localization.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\mufus.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="..\src\smart.c">
       <Filter>Source Files</Filter>
     </ClCompile>

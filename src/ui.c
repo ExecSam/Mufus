@@ -42,6 +42,7 @@
 
 #include "ui.h"
 #include "ui_data.h"
+#include "mufus.h"
 
 UINT_PTR UM_LANGUAGE_MENU_MAX = UM_LANGUAGE_MENU;
 HIMAGELIST hUpImageList, hDownImageList;
@@ -412,7 +413,19 @@ void PositionMainControls(HWND hDlg)
 	sz.cx = padding & 0xFFFF;
 	sz.cy = padding >> 16;
 	SendMessage(hSaveToolbar, TB_SETPADDING, 0, MAKELPARAM(sz.cx + 3, sz.cy + 2));
-	SetWindowPos(hSaveToolbar, hDeviceList, mw + fw - sbw, rc.top, sbw, ddbh, 0);
+	SetWindowPos(hSaveToolbar, hDeviceList, mw + fw - 2 * sbw - ssw, rc.top, sbw, ddbh, 0);
+
+	// Position the Mufus multi-drive button at the end of the device row
+	hCtrl = MufusGetToolbar();
+	if (hCtrl != NULL) {
+		SendMessage(hCtrl, TB_GETIDEALSIZE, (WPARAM)FALSE, (LPARAM)&sz);
+		SendMessage(hCtrl, TB_SETBUTTONSIZE, 0, MAKELPARAM(sz.cx, ddbh));
+		padding = (DWORD)SendMessage(hCtrl, TB_GETPADDING, 0, 0);
+		sz.cx = padding & 0xFFFF;
+		sz.cy = padding >> 16;
+		SendMessage(hCtrl, TB_SETPADDING, 0, MAKELPARAM(sz.cx + 3, sz.cy + 2));
+		SetWindowPos(hCtrl, hSaveToolbar, mw + fw - sbw, rc.top, sbw, ddbh, 0);
+	}
 
 	// Reposition the Hash button
 	hCtrl = GetDlgItem(hDlg, IDC_HASH);
@@ -457,7 +470,7 @@ void PositionMainControls(HWND hDlg)
 		// Still need to adjust the width of the device selection dropdown
 		GetWindowRect(hDeviceList, &rc);
 		MapWindowPoints(NULL, hMainDialog, (POINT*)&rc, 2);
-		SetWindowPos(hDeviceList, GetDlgItem(hDlg, IDS_DEVICE_TXT), rc.left, rc.top, fw - ssw - sbw, rc.bottom - rc.top, 0);
+		SetWindowPos(hDeviceList, GetDlgItem(hDlg, IDS_DEVICE_TXT), rc.left, rc.top, fw - 2 * (ssw + sbw), rc.bottom - rc.top, 0);
 	}
 
 	// Resize the full width controls
@@ -629,7 +642,10 @@ void ToggleAdvancedDeviceOptions(BOOL enable)
 
 	GetWindowRect(hDeviceList, &rc);
 	MapWindowPoints(NULL, hMainDialog, (POINT*)&rc, 2);
-	SetWindowPos(hDeviceList, GetDlgItem(hMainDialog, IDS_DEVICE_TXT), rc.left, rc.top, enable ? fw - ssw - sbw : fw, rc.bottom - rc.top, 0);
+	// The device dropdown leaves room for the multi-drive button, as well as the save button in advanced mode
+	SetWindowPos(hDeviceList, GetDlgItem(hMainDialog, IDS_DEVICE_TXT), rc.left, rc.top,
+		enable ? fw - 2 * (ssw + sbw) : fw - ssw - sbw, rc.bottom - rc.top, 0);
+	MufusUpdateUI();
 
 	// Resize the main dialog and log window
 	ResizeDialogs(shift);
@@ -1297,6 +1313,8 @@ void UpdateProgress(int op, float percent)
 		LastRefresh = GetTickCount64();
 		SendMessage(hProgress, PBM_SETPOS, (WPARAM)pos, 0);
 		SetTaskbarProgressValue(pos, MAX_PROGRESS);
+		if (mufus_worker)
+			MufusWorkerProgress(pos);
 	}
 }
 

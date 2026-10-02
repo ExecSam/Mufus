@@ -37,6 +37,7 @@
 #include "rufus.h"
 #include "ntdll.h"
 #include "winio.h"
+#include "mufus.h"
 #include "missing.h"
 #include "settings.h"
 #include "resource.h"
@@ -91,6 +92,9 @@ void uprintf(const char *format, ...)
 	// Send output to Windows debug facility
 	// coverity[dont_call]
 	OutputDebugStringW(wbuf);
+	// Mufus workers relay their log to the master
+	if (mufus_worker)
+		MufusWorkerLog(buf);
 	if ((hLog != NULL) && (hLog != INVALID_HANDLE_VALUE)) {
 		// Send output to our log Window
 		Edit_SetSel(hLog, MAX_LOG_SIZE, MAX_LOG_SIZE);
@@ -122,6 +126,8 @@ void wuprintf(const wchar_t* format, ...)
 
 	// coverity[dont_call]
 	OutputDebugStringW(wbuf);
+	if (mufus_worker)
+		MufusWorkerLogW(wbuf);
 	if ((hLog != NULL) && (hLog != INVALID_HANDLE_VALUE)) {
 		Edit_SetSel(hLog, MAX_LOG_SIZE, MAX_LOG_SIZE);
 		Edit_ReplaceSel(hLog, wbuf);
@@ -135,6 +141,8 @@ void uprintfs(const char* str)
 	wstr = utf8_to_wchar(str);
 	// coverity[dont_call]
 	OutputDebugStringW(wstr);
+	if (mufus_worker)
+		MufusWorkerLog(str);
 	if ((hLog != NULL) && (hLog != INVALID_HANDLE_VALUE)) {
 		Edit_SetSel(hLog, MAX_LOG_SIZE, MAX_LOG_SIZE);
 		Edit_ReplaceSel(hLog, wstr);
